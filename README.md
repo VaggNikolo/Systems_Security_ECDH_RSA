@@ -57,7 +57,7 @@ If not provided, the tool generates random private keys using libsodium's secure
 
 
 
-## RSA Encryption and Decryption Tool in C
+## RSA Encryption and Decryption Tool
 
 This repository contains a command-line tool rsa_assign_1 implemented in C, which performs RSA key generation, encryption, decryption, and performance analysis using the GMP (GNU Multiple Precision Arithmetic Library).
 
@@ -71,24 +71,17 @@ Performance Analysis: Compare the performance of RSA encryption and decryption w
 ### Requirements
 
 GMP Library: The tool uses the GMP library for handling large integers required in RSA cryptography.
-C Compiler: GCC or any C compiler that supports linking with the GMP library.
 
-### Compilation
 
-Compile the program using the following command:
-
-bash
-
-gcc -o rsa_assign_1 rsa_assign_1.c -lgmp
-
-Usage
+### Usage
 
 The tool accepts various command-line options to perform different operations:
 
 
-Usage: rsa_assign_1 [options]
+Usage: ``` rsa_assign_1 [options] ```
 
 Options:
+```
  -i path   Path to the input file
  -o path   Path to the output file
  -k path   Path to the key file
@@ -97,65 +90,78 @@ Options:
  -e        Encrypt input and store results to output
  -a        Perform performance analysis
  -h        This help message
+```
 
 ### Key Generation
 
 Generate RSA key pairs of a specified length.
-
-bash
-
+```
 ./rsa_assign_1 -g <key_length>
-
-Example:
-
-bash
-
-    ./rsa_assign_1 -g 2048
-
-    This command generates a 2048-bit RSA key pair and saves them as public_2048.key and private_2048.key.
+```
 
 ### Encryption
 
 Encrypt a plaintext file using a public key.
-
-bash
-
+```
 ./rsa_assign_1 -i <plaintext_file> -o <ciphertext_file> -k <public_key_file> -e
-
-Example:
-
-bash
-
-    ./rsa_assign_1 -i plaintext.txt -o ciphertext.txt -k public_2048.key -e
+```
 
 ### Decryption
 
 Decrypt a ciphertext file using a private key.
-
-bash
-
+```
 ./rsa_assign_1 -i <ciphertext_file> -o <decrypted_file> -k <private_key_file> -d
-
-Example:
-
-bash
-
-    ./rsa_assign_1 -i ciphertext.txt -o decrypted.txt -k private_2048.key -d
+```
 
 ### Performance Analysis
 
 Perform performance analysis of RSA encryption and decryption with key lengths of 1024, 2048, and 4096 bits.
 
-bash
-
+```
 ./rsa_assign_1 -a
+```
+### How it works
 
-    Output: Results are saved to performance.txt.
+**Select Two Large Primes**: Randomly generate two distinct large prime numbers, p and q, each approximately half the desired key length.
+Compute Modulus (n): Multiply the primes to get n:
+```
+n = p * q
+```
+This n is used as the modulus for both the public and private keys.
 
-Help
 
-Display the help message.
+**Calculate Totient (λ(n))**: Compute Euler's totient function:
+```
+λ(n) = (p - 1) * (q - 1)
+```
 
-bash
+**Choose Public Exponent (e)**: Select a small odd integer e that is co-prime with λ(n) (our choice was 65537 since it is commonly used).
 
-./rsa_assign_1 -h
+**Compute Private Exponent (d)**: Find d, the modular inverse of e modulo λ(n):
+```
+d ≡ e⁻¹ mod λ(n)
+```
+
+**Generate Key Pairs**:
+-Public Key: (n, e)
+-Private Key: (n, d)
+
+### Encryption
+
+Prepare the Plaintext: Convert the plaintext message into an integer m such that 0 ≤ m < n.
+Encrypt: Compute the ciphertext c using the public key:
+```
+    c = m^e mod n
+```
+
+Output: The ciphertext c is the encrypted message.
+
+### Decryption
+
+Receive the Ciphertext: Obtain the ciphertext c.
+Decrypt: Use the private key to compute the original message m:
+```
+m = c^d mod n
+```
+
+
