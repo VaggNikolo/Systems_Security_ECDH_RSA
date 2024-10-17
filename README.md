@@ -1,6 +1,18 @@
 # Systems_Security_ECDH_RSA
 Implementations of the Elliptic Curve Diffie-Hellman key exchange and the RSA cryptography methods.
 
+### Requirements
+
+GMP Library: The tool uses the GMP library for handling large integers required in RSA cryptography.
+```
+sudo apt-get install libgmp-dev
+```
+
+libsodium library: Ensure that you have the libsodium library installed on your system.
+```
+sudo apt-get install libsodium-dev
+```
+
 ## Compile the executables using the makefile
 ```
 sudo make
@@ -10,12 +22,6 @@ sudo make
 
 This repository contains a C program that implements the Elliptic Curve Diffie-Hellman (ECDH) key exchange protocol using the Curve25519 elliptic curve provided by the libsodium library. The tool allows two parties, Alice and Bob, to securely compute a shared secret over an insecure channel.
 
-### Requirements
-
-libsodium library: Ensure that you have the libsodium library installed on your system.
-```
-sudo apt-get install libsodium-dev
-```
 
 ### Usage
 
@@ -73,9 +79,7 @@ Encryption: Encrypt plaintext files using RSA public keys.
 Decryption: Decrypt ciphertext files using RSA private keys.
 Performance Analysis: Compare the performance of RSA encryption and decryption with different key lengths in terms of computational time and memory usage.
 
-### Requirements
 
-GMP Library: The tool uses the GMP library for handling large integers required in RSA cryptography.
 
 
 ### Usage
