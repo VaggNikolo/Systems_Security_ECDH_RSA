@@ -1,6 +1,55 @@
 # Systems_Security_ECDH_RSA
 Implementations of the Elliptic Curve Diffie-Hellman key exchange and the RSA cryptography methods.
 
+## Elliptic Curve Diffie-Hellman (ECDH) Key Exchange Tool
+
+This repository contains a C program that implements the Elliptic Curve Diffie-Hellman (ECDH) key exchange protocol using the Curve25519 elliptic curve provided by the libsodium library. The tool allows two parties, Alice and Bob, to securely compute a shared secret over an insecure channel.
+
+### Requirements
+
+libsodium library: Ensure that you have the libsodium library installed on your system.
+```
+sudo apt-get install libsodium-dev
+```
+
+### Usage
+
+Run the program with the required and optional command-line arguments:
+
+```
+./ecdh_assign_1 -o <output_file> [-a <alice_private_key>] [-b <bob_private_key>] [-h]
+```
+
+### Command-Line Options
+```
+-o path : Path to the output file (required).
+-a number : Alice's private key (optional).
+-b number : Bob's private key (optional).
+-h : Display the help message.
+```
+
+### How It Works
+
+Agreement on Elliptic Curve Parameters: Alice and Bob agree to use the Curve25519 elliptic curve.
+    Key Generation:
+        Alice:
+            Generates a private key (a).
+            Computes her public key A = a * G, where G is the base point.
+        Bob:
+            Generates a private key (b).
+            Computes his public key B = b * G.
+    Shared Secret Calculation:
+        Alice computes S_A = a * B.
+        Bob computes S_B = b * A.
+        Both shared secrets are the same: S_A = S_B = (a * b) * G.
+
+### Notes
+
+If private keys are provided via the -a or -b options, they are used directly.
+If not provided, the tool generates random private keys using libsodium's secure random number generator.
+
+
+
 ## RSA Encryption and Decryption Tool in C
 
 This repository contains a command-line tool rsa_assign_1 implemented in C, which performs RSA key generation, encryption, decryption, and performance analysis using the GMP (GNU Multiple Precision Arithmetic Library).
