@@ -1,1 +1,1 @@
-ermina
+This is a simple message

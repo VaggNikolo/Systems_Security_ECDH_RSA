@@ -1,0 +1,18 @@
+Key Length: 1024 bits
+Encryption Time: 0.0010s
+Decryption Time: 0.0001s
+Memory Usage (Encryption): 416 Bytes
+Memory Usage (Decryption): 296 Bytes
+
+Key Length: 2048 bits
+Encryption Time: 0.0036s
+Decryption Time: 0.0002s
+Memory Usage (Encryption): 800 Bytes
+Memory Usage (Decryption): 552 Bytes
+
+Key Length: 4096 bits
+Encryption Time: 0.0249s
+Decryption Time: 0.0003s
+Memory Usage (Encryption): 1568 Bytes
+Memory Usage (Decryption): 1064 Bytes
+
