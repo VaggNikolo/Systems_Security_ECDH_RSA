@@ -1,0 +1,24 @@
+Key Length: 1024 bits
+Key Generation Time: 0.006 seconds
+Encryption Time: 0.000 seconds
+Decryption Time: 0.001 seconds
+Peak Memory Usage (Key Generation): 2688 KB
+Peak Memory Usage (Encryption): 2688 KB
+Peak Memory Usage (Decryption): 2688 KB
+-------------------------------------------
+Key Length: 2048 bits
+Key Generation Time: 0.021 seconds
+Encryption Time: 0.001 seconds
+Decryption Time: 0.007 seconds
+Peak Memory Usage (Key Generation): 2688 KB
+Peak Memory Usage (Encryption): 2688 KB
+Peak Memory Usage (Decryption): 2688 KB
+-------------------------------------------
+Key Length: 4096 bits
+Key Generation Time: 0.176 seconds
+Encryption Time: 0.000 seconds
+Decryption Time: 0.025 seconds
+Peak Memory Usage (Key Generation): 2688 KB
+Peak Memory Usage (Encryption): 2688 KB
+Peak Memory Usage (Decryption): 2688 KB
+-------------------------------------------

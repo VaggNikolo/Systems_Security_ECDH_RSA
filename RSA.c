@@ -170,20 +170,77 @@ void rsaDecrypt(const char *inputFile, const char *outputFile, const char *keyFi
 
 
 // Function to measure performance
-void measurePerformance(int key_length) {
+#include <sys/time.h>
+#include <sys/resource.h>
+
+void measurePerformance(const char *performanceFile) {
     struct timeval start, end;
     struct rusage usage;
-    
-    // Measure time for key generation
-    gettimeofday(&start, NULL);
-    generateRSAKeyPair(key_length);
-    gettimeofday(&end, NULL);
-    printf("Key Generation Time for %d bits: %ld microseconds\n", key_length, ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec));
-    
-    // Measure memory usage for encryption and decryption (just a sample, you can expand)
-    getrusage(RUSAGE_SELF, &usage);
-    printf("Memory Usage (max resident set size): %ld kilobytes\n", usage.ru_maxrss);
+    FILE *performance = fopen(performanceFile, "w");
+
+    if (performance == NULL) {
+        printf("Error: Could not open performance file %s\n", performanceFile);
+        exit(1);
+    }
+
+    int key_lengths[] = {1024, 2048, 4096};
+    for (int i = 0; i < 3; i++) {
+        int key_length = key_lengths[i];
+        printf("Measuring performance for key length: %d bits\n", key_length);
+
+        // Measure time for key generation
+        gettimeofday(&start, NULL);
+        generateRSAKeyPair(key_length);
+        gettimeofday(&end, NULL);
+        long keygen_time = ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+        
+        // Measure memory usage for key generation
+        getrusage(RUSAGE_SELF, &usage);
+        long memory_usage_keygen = usage.ru_maxrss;
+
+        // Dummy encryption and decryption files
+        char plaintext_file[20] = "plaintext.txt";
+        char ciphertext_file[20] = "ciphertext.txt";
+        char decrypted_file[20] = "decrypted.txt";
+        char pub_key_file[50], priv_key_file[50];
+
+        sprintf(pub_key_file, "public_%d.key", key_length);
+        sprintf(priv_key_file, "private_%d.key", key_length);
+
+        // Measure time for encryption
+        gettimeofday(&start, NULL);
+        rsaEncrypt(plaintext_file, ciphertext_file, pub_key_file);
+        gettimeofday(&end, NULL);
+        long encrypt_time = ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+        
+        // Measure memory usage for encryption
+        getrusage(RUSAGE_SELF, &usage);
+        long memory_usage_encrypt = usage.ru_maxrss;
+
+        // Measure time for decryption
+        gettimeofday(&start, NULL);
+        rsaDecrypt(ciphertext_file, decrypted_file, priv_key_file);
+        gettimeofday(&end, NULL);
+        long decrypt_time = ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec);
+
+        // Measure memory usage for decryption
+        getrusage(RUSAGE_SELF, &usage);
+        long memory_usage_decrypt = usage.ru_maxrss;
+
+        // Write results to performance.txt
+        fprintf(performance, "Key Length: %d bits\n", key_length);
+        fprintf(performance, "Key Generation Time: %.3f seconds\n", keygen_time / 1000000.0);
+        fprintf(performance, "Encryption Time: %.3f seconds\n", encrypt_time / 1000000.0);
+        fprintf(performance, "Decryption Time: %.3f seconds\n", decrypt_time / 1000000.0);
+        fprintf(performance, "Peak Memory Usage (Key Generation): %ld KB\n", memory_usage_keygen);
+        fprintf(performance, "Peak Memory Usage (Encryption): %ld KB\n", memory_usage_encrypt);
+        fprintf(performance, "Peak Memory Usage (Decryption): %ld KB\n", memory_usage_decrypt);
+        fprintf(performance, "-------------------------------------------\n");
+    }
+
+    fclose(performance);
 }
+
 
 // Command-line parsing and main function
 int main(int argc, char *argv[]) {
@@ -192,8 +249,9 @@ int main(int argc, char *argv[]) {
     char *input_file = NULL;
     char *output_file = NULL;
     char *key_file = NULL;
+    char *performance_file = NULL;
 
-    while ((opt = getopt(argc, argv, "i:o:k:g:deha")) != -1) {
+    while ((opt = getopt(argc, argv, "i:o:k:g:deha:")) != -1) {
         switch (opt) {
             case 'i':
                 input_file = optarg;
@@ -215,16 +273,18 @@ int main(int argc, char *argv[]) {
                 rsaEncrypt(input_file, output_file, key_file);
                 break;
             case 'a':
-                // Perform performance analysis
-                measurePerformance(1024);
-                measurePerformance(2048);
-                measurePerformance(4096);
+                performance_file = optarg;
+                measurePerformance(performance_file);
                 break;
             case 'h':
             default:
-                printf("Usage: ... \n");
+                printf("Usage: ./rsa_assign_1 -g length\n"
+                       "       ./rsa_assign_1 -i input.txt -o output.txt -k keyfile -e|-d\n"
+                       "       ./rsa_assign_1 -a performance.txt\n");
                 exit(EXIT_FAILURE);
         }
     }
+
     return 0;
 }
+
