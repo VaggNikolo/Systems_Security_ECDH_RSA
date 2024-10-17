@@ -1,23 +1,23 @@
 # Systems_Security_ECDH_RSA
 Implementations of the Elliptic Curve Diffie-Hellman key exchange and the RSA cryptography methods.
 
-# RSA Encryption and Decryption Tool in C
+## RSA Encryption and Decryption Tool in C
 
 This repository contains a command-line tool rsa_assign_1 implemented in C, which performs RSA key generation, encryption, decryption, and performance analysis using the GMP (GNU Multiple Precision Arithmetic Library).
 
-# Features
+### Features
 
 Key Generation: Generate RSA public and private key pairs of specified lengths (1024, 2048, or 4096 bits).
 Encryption: Encrypt plaintext files using RSA public keys.
 Decryption: Decrypt ciphertext files using RSA private keys.
 Performance Analysis: Compare the performance of RSA encryption and decryption with different key lengths in terms of computational time and memory usage.
 
-# Requirements
+### Requirements
 
 GMP Library: The tool uses the GMP library for handling large integers required in RSA cryptography.
 C Compiler: GCC or any C compiler that supports linking with the GMP library.
 
-# Compilation
+### Compilation
 
 Compile the program using the following command:
 
@@ -42,7 +42,7 @@ Options:
  -a        Perform performance analysis
  -h        This help message
 
-# Key Generation
+### Key Generation
 
 Generate RSA key pairs of a specified length.
 
@@ -58,7 +58,7 @@ bash
 
     This command generates a 2048-bit RSA key pair and saves them as public_2048.key and private_2048.key.
 
-# Encryption
+### Encryption
 
 Encrypt a plaintext file using a public key.
 
@@ -72,7 +72,7 @@ bash
 
     ./rsa_assign_1 -i plaintext.txt -o ciphertext.txt -k public_2048.key -e
 
-# Decryption
+### Decryption
 
 Decrypt a ciphertext file using a private key.
 
@@ -86,7 +86,7 @@ bash
 
     ./rsa_assign_1 -i ciphertext.txt -o decrypted.txt -k private_2048.key -d
 
-# Performance Analysis
+### Performance Analysis
 
 Perform performance analysis of RSA encryption and decryption with key lengths of 1024, 2048, and 4096 bits.
 
