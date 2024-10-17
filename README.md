@@ -160,7 +160,7 @@ d ≡ e⁻¹ mod λ(n)
 Prepare the Plaintext: Convert the plaintext message into an integer m such that 0 ≤ m < n.
 Encrypt: Compute the ciphertext c using the public key:
 ```
-    c = m^e mod n
+c = m^e mod n
 ```
 
 Output: The ciphertext c is the encrypted message.
