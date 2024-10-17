@@ -36,16 +36,19 @@ Key Generation:
 
 Alice:
 Generates a private key (a).
-Computes her public key A = a * G, where G is the base point.
+Computes her public key **A = a * G**, where G is the base point.
         
 Bob:
 Generates a private key (b).
-Computes his public key B = b * G.
+Computes his public key **B = b * G**.
 
 Shared Secret Calculation:
-Alice computes S_A = a * B.
-Bob computes S_B = b * A.
-Both shared secrets are the same: S_A = S_B = (a * b) * G.
+
+Alice computes **S_A = a * B**.
+
+Bob computes **S_B = b * A**.
+
+Both shared secrets are the same: **S_A = S_B = (a * b) * G**.
 
 ### Notes
 
