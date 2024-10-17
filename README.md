@@ -1,6 +1,11 @@
 # Systems_Security_ECDH_RSA
 Implementations of the Elliptic Curve Diffie-Hellman key exchange and the RSA cryptography methods.
 
+## Compile the executables using the makefile
+```
+sudo make
+```
+
 ## Elliptic Curve Diffie-Hellman (ECDH) Key Exchange Tool
 
 This repository contains a C program that implements the Elliptic Curve Diffie-Hellman (ECDH) key exchange protocol using the Curve25519 elliptic curve provided by the libsodium library. The tool allows two parties, Alice and Bob, to securely compute a shared secret over an insecure channel.
