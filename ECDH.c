@@ -4,7 +4,7 @@
 #include <sodium.h>
 #include <unistd.h>
 
-// Function to convert binary data to a hexadecimal string
+/*Converts binary to hexadecimal string*/
 void bin_to_hex(const unsigned char *bin, size_t bin_len, char *hex) {
     for (size_t i = 0; i < bin_len; i++) {
         sprintf(hex + i * 2, "%02x", bin[i]);
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     char *b_private_key_str = NULL;
     int opt;
 
-    // Parse command-line options
+    /*CLI Args*/
     while ((opt = getopt(argc, argv, "o:a:b:h")) != -1) {
         switch (opt) {
             case 'o':
@@ -48,55 +48,55 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Initialize libsodium
+    /*Libsodium init*/
     if (sodium_init() < 0) {
         fprintf(stderr, "Failed to initialize libsodium.\n");
         return -1;
     }
 
-    // Set Alice's private key
+    /*  Alice's private key generation
+    In the case that it is provided use it
+    Else generate it randomly   */
     if (a_private_key_str) {
-        // Use provided private key for Alice
         sodium_hex2bin(alice_private, sizeof(alice_private), a_private_key_str, strlen(a_private_key_str), NULL, NULL, NULL);
     } else {
-        // Generate random private key for Alice
         randombytes_buf(alice_private, sizeof(alice_private));
     }
 
-    // Compute Alice's public key
+    /*Computes Alice's public key*/
     crypto_scalarmult_base(alice_public, alice_private);
 
-    // Set Bob's private key
+    /*  Bob's private key generation
+    In the case that it is provided use it
+    Else generate it randomly   */
     if (b_private_key_str) {
-        // Use provided private key for Bob
         sodium_hex2bin(bob_private, sizeof(bob_private), b_private_key_str, strlen(b_private_key_str), NULL, NULL, NULL);
     } else {
-        // Generate random private key for Bob
         randombytes_buf(bob_private, sizeof(bob_private));
     }
 
-    // Compute Bob's public key
+    /*Computes Bob's public key*/
     crypto_scalarmult_base(bob_public, bob_private);
 
-    // Compute shared secret: Alice's side
+    /*Computes shared secret from Alice's side*/
     if (crypto_scalarmult(shared_secret_alice, alice_private, bob_public) != 0) {
         fprintf(stderr, "Error computing shared secret on Alice's side.\n");
         return -1;
     }
 
-    // Compute shared secret: Bob's side
+    /*Computes shared secret from Bob's side*/
     if (crypto_scalarmult(shared_secret_bob, bob_private, alice_public) != 0) {
         fprintf(stderr, "Error computing shared secret on Bob's side.\n");
         return -1;
     }
 
-    // Check if shared secrets match
+    /*Check if shared secrets match*/
     if (memcmp(shared_secret_alice, shared_secret_bob, crypto_scalarmult_BYTES) != 0) {
         fprintf(stderr, "Shared secrets do not match!\n");
         return -1;
     }
 
-    // Convert keys and shared secrets to hexadecimal strings
+    /*Convert shared keys and secrets to hex*/
     char alice_public_hex[crypto_scalarmult_BYTES * 2 + 1];
     char bob_public_hex[crypto_scalarmult_BYTES * 2 + 1];
     char shared_secret_hex[crypto_scalarmult_BYTES * 2 + 1];
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     bin_to_hex(bob_public, crypto_scalarmult_BYTES, bob_public_hex);
     bin_to_hex(shared_secret_alice, crypto_scalarmult_BYTES, shared_secret_hex);
 
-    // Write the output to the specified file
+    /*Output to file*/
     FILE *fout = fopen(output_path, "w");
     if (!fout) {
         perror("Failed to open output file");

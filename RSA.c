@@ -13,7 +13,7 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
 void decryptFile(const char *input_path, const char *output_path, const char *key_path, size_t *mem_usage);
 void performanceAnalysis(const char *performance_file);
 int is_prime(mpz_t n, int reps);
-size_t get_mpz_memory_usage(mpz_t var); // Function to calculate memory usage of mpz_t variables
+size_t get_mpz_memory_usage(mpz_t var); 
 
 int main(int argc, char *argv[]) {
     int opt;
@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     char *input_path = NULL, *output_path = NULL, *key_path = NULL;
     char *performance_file = NULL;
 
+    /*CLI Args*/
     while ((opt = getopt(argc, argv, "i:o:k:g:deha:")) != -1) {
         switch (opt) {
             case 'i':
@@ -63,6 +64,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /*Perform operation based on args*/
     if (generate) {
         generateRSAKeyPair(key_length);
     } else if (encrypt) {
@@ -88,7 +90,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // Free allocated memory
+    /*Free memory*/
     free(input_path);
     free(output_path);
     free(key_path);
@@ -97,18 +99,20 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+/*Generate RSA key pair of given length*/
 void generateRSAKeyPair(int key_length) {
     mpz_t p, q, n, lambda_n, e, d, gcd_result;
     gmp_randstate_t state;
     unsigned long int seed;
     int half_key_length = key_length / 2;
 
-    mpz_inits(p, q, n, lambda_n, e, d, gcd_result, NULL);
+
+    mpz_inits(p, q, n, lambda_n, e, d, gcd_result, NULL); //Initialize variables
     gmp_randinit_mt(state);
     seed = (unsigned long int) time(NULL);
     gmp_randseed_ui(state, seed);
 
-    // Generate two distinct large prime numbers p and q
+    /*Generate two distinct large prime numbers p and q*/
     do {
         mpz_urandomb(p, state, half_key_length);
         mpz_nextprime(p, p);
@@ -119,17 +123,17 @@ void generateRSAKeyPair(int key_length) {
         mpz_nextprime(q, q);
     } while (!is_prime(q, 25) || mpz_cmp(p, q) == 0);
 
-    // Compute n = p * q
+    /*Compute n = p * q*/
     mpz_mul(n, p, q);
 
-    // Compute lambda(n) = (p - 1) * (q - 1)
+    /*Compute lambda(n) = (p - 1) * (q - 1)*/
     mpz_t p_minus_1, q_minus_1;
     mpz_inits(p_minus_1, q_minus_1, NULL);
     mpz_sub_ui(p_minus_1, p, 1);
     mpz_sub_ui(q_minus_1, q, 1);
     mpz_mul(lambda_n, p_minus_1, q_minus_1);
 
-    // Choose e
+    /*Choose e*/
     mpz_set_ui(e, 65537); // Common choice for e
     mpz_gcd(gcd_result, e, lambda_n);
     while (mpz_cmp_ui(gcd_result, 1) != 0) {
@@ -137,13 +141,13 @@ void generateRSAKeyPair(int key_length) {
         mpz_gcd(gcd_result, e, lambda_n);
     }
 
-    // Compute d, the modular inverse of e mod lambda(n)
+    /*Compute d, the modular inverse of e mod lambda(n)*/
     if (mpz_invert(d, e, lambda_n) == 0) {
         fprintf(stderr, "Error computing modular inverse.\n");
         exit(1);
     }
 
-    // Save public key (n, d)
+    /*Save public key (n, d)*/
     char public_key_filename[256];
     sprintf(public_key_filename, "public_%d.key", key_length);
     FILE *pub_file = fopen(public_key_filename, "w");
@@ -156,7 +160,7 @@ void generateRSAKeyPair(int key_length) {
     mpz_out_str(pub_file, 16, d); // Save d
     fclose(pub_file);
 
-    // Save private key (n, e)
+    /*Save private key (n, e)*/
     char private_key_filename[256];
     sprintf(private_key_filename, "private_%d.key", key_length);
     FILE *priv_file = fopen(private_key_filename, "w");
@@ -164,23 +168,24 @@ void generateRSAKeyPair(int key_length) {
         perror("Error opening private key file");
         exit(1);
     }
-    mpz_out_str(priv_file, 16, n); // Save n
+    mpz_out_str(priv_file, 16, n);
     fprintf(priv_file, "\n");
-    mpz_out_str(priv_file, 16, e); // Save e
+    mpz_out_str(priv_file, 16, e);
     fclose(priv_file);
 
     printf("Keys generated and saved to %s and %s\n", public_key_filename, private_key_filename);
 
-    // Clear variables
+    /*Clear variables*/
     mpz_clears(p, q, n, lambda_n, e, d, gcd_result, p_minus_1, q_minus_1, NULL);
     gmp_randclear(state);
 }
 
+/*Encrypt file using RSA*/
 void encryptFile(const char *input_path, const char *output_path, const char *key_path, size_t *mem_usage) {
     mpz_t n, d, plaintext, ciphertext;
     mpz_inits(n, d, plaintext, ciphertext, NULL);
 
-    // Read public key (n, d)
+    /*Read public key (n, d)*/
     FILE *key_file = fopen(key_path, "r");
     if (!key_file) {
         perror("Error opening key file");
@@ -190,7 +195,7 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
     mpz_inp_str(d, key_file, 16);
     fclose(key_file);
 
-    // Read plaintext from input file
+    /*Read plaintext from input file*/
     FILE *in_file = fopen(input_path, "rb"); // Open in binary mode
     if (!in_file) {
         perror("Error opening input file");
@@ -213,20 +218,20 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
     fread(buffer, 1, filesize, in_file);
     fclose(in_file);
 
-    // Convert buffer to mpz_t plaintext
+    /*Convert buffer to mpz_t plaintext*/
     mpz_import(plaintext, filesize, 1, 1, 0, 0, buffer);
     free(buffer);
 
-    // Check if plaintext >= n
+    /*Check if the text is larger than modulus n*/
     if (mpz_cmp(plaintext, n) >= 0) {
         fprintf(stderr, "Error: Plaintext too large. Must be less than modulus n.\n");
         exit(1);
     }
 
-    // Encrypt: ciphertext = plaintext^d mod n
+    /*Encrypt: ciphertext = plaintext^d mod n*/
     mpz_powm(ciphertext, plaintext, d, n);
 
-    // Write ciphertext to output file
+    /*Output to ciphertext.txt*/
     FILE *out_file = fopen(output_path, "w");
     if (!out_file) {
         perror("Error opening output file");
@@ -245,11 +250,12 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
     mpz_clears(n, d, plaintext, ciphertext, NULL);
 }
 
+/*Decrypt file using RSA*/
 void decryptFile(const char *input_path, const char *output_path, const char *key_path, size_t *mem_usage) {
     mpz_t n, e, plaintext, ciphertext;
     mpz_inits(n, e, plaintext, ciphertext, NULL);
 
-    // Read private key (n, e)
+    /*Read private key (n, e)*/
     FILE *key_file = fopen(key_path, "r");
     if (!key_file) {
         perror("Error opening key file");
@@ -259,7 +265,7 @@ void decryptFile(const char *input_path, const char *output_path, const char *ke
     mpz_inp_str(e, key_file, 16);
     fclose(key_file);
 
-    // Read ciphertext from input file
+    /*Read the ciphered text from the respective file*/
     FILE *in_file = fopen(input_path, "r");
     if (!in_file) {
         perror("Error opening input file");
@@ -272,14 +278,14 @@ void decryptFile(const char *input_path, const char *output_path, const char *ke
     }
     fclose(in_file);
 
-    // Decrypt: plaintext = ciphertext^e mod n
+    /*Decrypt: plaintext = ciphertext^e mod n*/
     mpz_powm(plaintext, ciphertext, e, n);
 
-    // Convert plaintext mpz_t to buffer
+    /*Convert plaintext mpz_t to buffer*/
     size_t count;
     unsigned char *buffer = mpz_export(NULL, &count, 1, 1, 0, 0, plaintext);
 
-    // Write plaintext to output file
+    /*Write the decrypted message to the output file*/
     FILE *out_file = fopen(output_path, "wb"); // Open in binary mode
     if (!out_file) {
         perror("Error opening output file");
@@ -299,12 +305,14 @@ void decryptFile(const char *input_path, const char *output_path, const char *ke
     mpz_clears(n, e, plaintext, ciphertext, NULL);
 }
 
+/*Used for memory usage monitoring*/
 size_t get_mpz_memory_usage(mpz_t var) {
     size_t limbs = mpz_size(var);
     size_t limb_size = sizeof(mp_limb_t);
     return limbs * limb_size;
 }
 
+/*Perform performance analysis*/
 void performanceAnalysis(const char *performance_file) {
     int key_lengths[] = {1024, 2048, 4096};
     char *plaintext_file = "plaintext.txt";
@@ -313,17 +321,17 @@ void performanceAnalysis(const char *performance_file) {
         perror("Error opening performance file");
         exit(1);
     }
-
+    /*Perform analysis for each key length*/
     for (int i = 0; i < 3; i++) {
         int key_length = key_lengths[i];
         struct timeval start, end;
         double enc_time, dec_time;
         size_t enc_mem_usage = 0, dec_mem_usage = 0;
 
-        // Generate keys
+        /*Generate keys*/
         generateRSAKeyPair(key_length);
 
-        // Encrypt
+        /*Encrypt*/
         gettimeofday(&start, NULL);
         char public_key_filename[256];
         sprintf(public_key_filename, "public_%d.key", key_length);
@@ -331,7 +339,7 @@ void performanceAnalysis(const char *performance_file) {
         gettimeofday(&end, NULL);
         enc_time = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
-        // Decrypt
+        /*Decrypt*/
         gettimeofday(&start, NULL);
         char private_key_filename[256];
         sprintf(private_key_filename, "private_%d.key", key_length);
@@ -339,7 +347,7 @@ void performanceAnalysis(const char *performance_file) {
         gettimeofday(&end, NULL);
         dec_time = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1e6;
 
-        // Write results
+        /*Write results*/
         fprintf(perf_file, "Key Length: %d bits\n", key_length);
         fprintf(perf_file, "Encryption Time: %.4fs\n", enc_time);
         fprintf(perf_file, "Decryption Time: %.4fs\n", dec_time);
@@ -351,6 +359,7 @@ void performanceAnalysis(const char *performance_file) {
     printf("Performance analysis complete. Results saved to %s\n", performance_file);
 }
 
+/*Check if a number is prime*/
 int is_prime(mpz_t n, int reps) {
     return mpz_probab_prime_p(n, reps);
 }
