@@ -107,40 +107,41 @@ void generateRSAKeyPair(int key_length) {
     int half_key_length = key_length / 2;
 
 
-    mpz_inits(p, q, n, lambda_n, e, d, gcd_result, NULL); //Initialize variables
+    mpz_inits(p, q, n, lambda_n, e, d, gcd_result,NULL); //Initialize variables
     gmp_randinit_mt(state);
     seed = (unsigned long int) time(NULL);
     gmp_randseed_ui(state, seed);
 
-    /*Generate two distinct large prime numbers p and q*/
+    /*Generate two distinct large prime numbers p and q both length = key_length/2 */
     do {
         mpz_urandomb(p, state, half_key_length);
-        mpz_nextprime(p, p);
-    } while (!is_prime(p, 25));
+    } while (mpz_probab_prime_p(p,45) == 0);
 
     do {
         mpz_urandomb(q, state, half_key_length);
-        mpz_nextprime(q, q);
-    } while (!is_prime(q, 25) || mpz_cmp(p, q) == 0);
+    } while ((mpz_probab_prime_p(q,45) == 0) || mpz_cmp(p, q) == 0);
 
     /*Compute n = p * q*/
     mpz_mul(n, p, q);
 
     /*Compute lambda(n) = (p - 1) * (q - 1)*/
-    mpz_t p_minus_1, q_minus_1;
-    mpz_inits(p_minus_1, q_minus_1, NULL);
+    mpz_t p_minus_1, q_minus_1,remainder;
+    mpz_inits(p_minus_1, q_minus_1,remainder, NULL);
     mpz_sub_ui(p_minus_1, p, 1);
     mpz_sub_ui(q_minus_1, q, 1);
     mpz_mul(lambda_n, p_minus_1, q_minus_1);
 
-    /*Choose e*/
+    /*Choose e where (e % lambda(n) != 0) AND (gcd(e, lambda) == 1) where gcd() is the Greatest Common Denominator*/
     mpz_set_ui(e, 65537); // Common choice for e
-    mpz_gcd(gcd_result, e, lambda_n);
-    while (mpz_cmp_ui(gcd_result, 1) != 0) {
-        mpz_add_ui(e, e, 2);
-        mpz_gcd(gcd_result, e, lambda_n);
-    }
-
+    do{
+    	mpz_gcd(gcd_result, e, lambda_n);
+    	mpz_mod(remainder, e , lambda_n);
+    	if(mpz_cmp_ui(gcd_result, 1) == 0 && (mpz_cmp_ui(remainder, 0) != 0)){
+    		break; //Both Conditions are satisfied
+    	}
+    	mpz_add_ui(e, e, 2);	
+    }while(1);
+ 
     /*Compute d, the modular inverse of e mod lambda(n)*/
     if (mpz_invert(d, e, lambda_n) == 0) {
         fprintf(stderr, "Error computing modular inverse.\n");
@@ -150,33 +151,33 @@ void generateRSAKeyPair(int key_length) {
     /*Save public key (n, d)*/
     char public_key_filename[256];
     sprintf(public_key_filename, "public_%d.key", key_length);
-    FILE *pub_file = fopen(public_key_filename, "w");
-    if (!pub_file) {
+    FILE *public_key_file = fopen(public_key_filename, "w");
+    if (!public_key_file) {
         perror("Error opening public key file");
         exit(1);
     }
-    mpz_out_str(pub_file, 16, n); // Save n
-    fprintf(pub_file, "\n");
-    mpz_out_str(pub_file, 16, d); // Save d
-    fclose(pub_file);
+    mpz_out_str(public_key_file, 16, n); // Save n
+    fprintf(public_key_file, "\n");
+    mpz_out_str(public_key_file, 16, d); // Save d
+    fclose(public_key_file);
 
     /*Save private key (n, e)*/
     char private_key_filename[256];
     sprintf(private_key_filename, "private_%d.key", key_length);
-    FILE *priv_file = fopen(private_key_filename, "w");
-    if (!priv_file) {
+    FILE *private_key_file = fopen(private_key_filename, "w");
+    if (!private_key_file) {
         perror("Error opening private key file");
         exit(1);
     }
-    mpz_out_str(priv_file, 16, n);
-    fprintf(priv_file, "\n");
-    mpz_out_str(priv_file, 16, e);
-    fclose(priv_file);
+    mpz_out_str(private_key_file, 16, n);  //Save n 
+    fprintf(private_key_file, "\n");
+    mpz_out_str(private_key_file, 16, e); //Save e
+    fclose(private_key_file);
 
     printf("Keys generated and saved to %s and %s\n", public_key_filename, private_key_filename);
 
     /*Clear variables*/
-    mpz_clears(p, q, n, lambda_n, e, d, gcd_result, p_minus_1, q_minus_1, NULL);
+    mpz_clears(p, q, n, lambda_n, e, d, gcd_result, p_minus_1, q_minus_1, remainder, NULL);
     gmp_randclear(state);
 }
 
@@ -196,27 +197,28 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
     fclose(key_file);
 
     /*Read plaintext from input file*/
-    FILE *in_file = fopen(input_path, "rb"); // Open in binary mode
-    if (!in_file) {
+    FILE *input_file = fopen(input_path, "rb"); // Open in binary mode
+    if (!input_file) {
         perror("Error opening input file");
         exit(1);
     }
-    fseek(in_file, 0, SEEK_END);
-    long filesize = ftell(in_file);
-    fseek(in_file, 0, SEEK_SET);
+    fseek(input_file, 0, SEEK_END);
+    long filesize = ftell(input_file);
+    fseek(input_file, 0, SEEK_SET);
     if (filesize == 0) {
         fprintf(stderr, "Error: Input file is empty.\n");
-        fclose(in_file);
+        fclose(input_file);
         exit(1);
     }
+    
     unsigned char *buffer = malloc(filesize);
     if (!buffer) {
         perror("Error allocating memory for plaintext");
-        fclose(in_file);
+        fclose(input_file);
         exit(1);
     }
-    fread(buffer, 1, filesize, in_file);
-    fclose(in_file);
+    fread(buffer, 1, filesize, input_file);
+    fclose(input_file);
 
     /*Convert buffer to mpz_t plaintext*/
     mpz_import(plaintext, filesize, 1, 1, 0, 0, buffer);
@@ -232,13 +234,13 @@ void encryptFile(const char *input_path, const char *output_path, const char *ke
     mpz_powm(ciphertext, plaintext, d, n);
 
     /*Output to ciphertext.txt*/
-    FILE *out_file = fopen(output_path, "w");
-    if (!out_file) {
+    FILE *output_file = fopen(output_path, "w");
+    if (!output_file) {
         perror("Error opening output file");
         exit(1);
     }
-    mpz_out_str(out_file, 16, ciphertext);
-    fclose(out_file);
+    mpz_out_str(output_file, 16, ciphertext);
+    fclose(output_file);
 
     if (mem_usage != NULL) {
         *mem_usage = get_mpz_memory_usage(n) + get_mpz_memory_usage(d) +
@@ -266,17 +268,17 @@ void decryptFile(const char *input_path, const char *output_path, const char *ke
     fclose(key_file);
 
     /*Read the ciphered text from the respective file*/
-    FILE *in_file = fopen(input_path, "r");
-    if (!in_file) {
+    FILE *input_file = fopen(input_path, "r");
+    if (!input_file) {
         perror("Error opening input file");
         exit(1);
     }
-    if (mpz_inp_str(ciphertext, in_file, 16) == 0) {
+    if (mpz_inp_str(ciphertext, input_file, 16) == 0) {
         fprintf(stderr, "Error reading ciphertext\n");
-        fclose(in_file);
+        fclose(input_file);
         exit(1);
     }
-    fclose(in_file);
+    fclose(input_file);
 
     /*Decrypt: plaintext = ciphertext^e mod n*/
     mpz_powm(plaintext, ciphertext, e, n);
@@ -286,13 +288,13 @@ void decryptFile(const char *input_path, const char *output_path, const char *ke
     unsigned char *buffer = mpz_export(NULL, &count, 1, 1, 0, 0, plaintext);
 
     /*Write the decrypted message to the output file*/
-    FILE *out_file = fopen(output_path, "wb"); // Open in binary mode
-    if (!out_file) {
+    FILE *output_file = fopen(output_path, "wb"); // Open in binary mode
+    if (!output_file) {
         perror("Error opening output file");
         exit(1);
     }
-    fwrite(buffer, 1, count, out_file);
-    fclose(out_file);
+    fwrite(buffer, 1, count, output_file);
+    fclose(output_file);
     free(buffer);
 
     if (mem_usage != NULL) {
@@ -351,15 +353,10 @@ void performanceAnalysis(const char *performance_file) {
         fprintf(perf_file, "Key Length: %d bits\n", key_length);
         fprintf(perf_file, "Encryption Time: %.4fs\n", enc_time);
         fprintf(perf_file, "Decryption Time: %.4fs\n", dec_time);
-        fprintf(perf_file, "Memory Usage (Encryption): %zu Bytes\n", enc_mem_usage);
-        fprintf(perf_file, "Memory Usage (Decryption): %zu Bytes\n\n", dec_mem_usage);
+        fprintf(perf_file, "Peak Memory Usage (Encryption): %zu Bytes\n", enc_mem_usage);
+        fprintf(perf_file, "Peak Memory Usage (Decryption): %zu Bytes\n\n", dec_mem_usage);
     }
 
     fclose(perf_file);
     printf("Performance analysis complete. Results saved to %s\n", performance_file);
-}
-
-/*Check if a number is prime*/
-int is_prime(mpz_t n, int reps) {
-    return mpz_probab_prime_p(n, reps);
 }

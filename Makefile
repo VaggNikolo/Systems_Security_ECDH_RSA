@@ -19,7 +19,7 @@ ECDH_OBJ = ECDH.o
 RSA_OBJ = RSA.o
 
 #Targets
-all: $(ECDH_EXEC) $(RSA_EXEC)
+all: $(ECDH_EXEC) $(RSA_EXEC) $(ECDH_EXEC_test) $(RSA_EXEC_test)
 
 #ECDH executable
 $(ECDH_EXEC): $(ECDH_OBJ)
@@ -40,5 +40,4 @@ $(RSA_OBJ): $(RSA_SRC)
 #Clean up object files and executables
 clean:
 	rm -f $(ECDH_OBJ) $(RSA_OBJ) $(ECDH_EXEC) $(RSA_EXEC)
-
 .PHONY: all clean
